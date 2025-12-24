@@ -204,3 +204,37 @@ def save_final_values(run_dir, vae_loss_matrix, classifier_loss_matrix, classifi
 
     fig.savefig(final_values_dir / "classifier_final_accuracy.png", bbox_inches='tight', dpi=300)
     plt.close(fig)
+
+
+def save_label_frequency(run_dir, label_counts, title, cmap='viridis'):
+    """save the frequency of different labels in the generated datasets"""
+    label_freq_dir = run_dir / "plots" / "label_frequencies"
+    label_freq_dir.mkdir(exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    # iterations, where the first value represents the initial dataset and is set to 0
+    xvalues = np.arange(len(label_counts))
+
+    # finding all unique indices in the list of dictionaries
+    indices = list(set([y for sublist in [x.keys() for x in label_counts] for y in sublist]))
+
+    colormap = plt.get_cmap(cmap)
+    colors = [colormap(i / (len(indices) - 1)) for i in range(len(indices))]
+
+    for value, idx in enumerate(indices):
+        value_counts = []
+        for freq_dict in label_counts:
+            value_counts.append(freq_dict.get(value, 0))
+        ax.plot(xvalues, value_counts, color=colors[idx], label=f'Counts of {value}', linewidth=1.5)
+    
+    ax.set_xlabel("Iterations")
+    ax.set_ylabel("Label Counts")
+    ax.set_title("Distribution Of Label Counts Over Iterations")
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    fig.savefig(label_freq_dir / "label_counts.png", bbox_inches='tight', dpi=300)
+    plt.close(fig)
+

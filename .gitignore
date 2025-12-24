@@ -9,15 +9,17 @@ wheels/
 # Virtual environments
 .venv
 
-# ignore all downloaded data
+# data
 data/*
-!*/.gitkeep
+!data/.gitkeep
 
 # ruff
 .ruff_cache/
 
 # outputs of experiments
 experiments/*
+!experiments/.gitkeep
+!experiments/delete_runs.sh
 
 # Development
 TODO.md

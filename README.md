@@ -47,3 +47,9 @@ Model-Ouroboros will work as expected on either CPU or CUDA-enabled GPU.
 As currently written, this will not utilise any GPU without CUDA support. If `nvidia-smi` is detected, then PyTorch is downloaded using a wheel specifically with CUDA 12.1 support (see `setup.sh` for more details).
 
 Empirically, performance improvements using the CUDA version as opposed to only a CPU provide moderate improvements of around 2x.
+
+## Clear Processed Data
+
+To clear previous runs, run the `/experiments/delete_runs.sh` script.
+WARNING: Doing this will delete every run in your experiments directory. Before doing this, ensure that you have collected all the relevant runs you would like to keep.
+This script is indended to be used to free up disk space after development. You do not want to do this after running your own custom experiments.

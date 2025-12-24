@@ -92,3 +92,13 @@ def evaluate_classifier(classifier, dataloader, device):
     accuracy = correct / total
     return avg_loss, accuracy
 
+
+def label_stats_find(labels):
+    """find the counts of labels in a provided tensor"""
+
+    # find the unique values and their counts in two identically-indexed tensors
+    values, counts = torch.unique(labels, return_counts=True)
+    values = [int(x) for x in values] # convert from float to int
+
+    freq_dict = dict(zip(values, counts.tolist()))
+    return freq_dict

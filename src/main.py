@@ -14,8 +14,8 @@ from tqdm.auto import tqdm
 # local imports
 from load_dataset import load_MNIST
 from models import VAE, Classifier
-from training_utils import train_vae, train_classifier, generate_digits, classify_digits, evaluate_classifier
-from visualisation_utils import visualise_digits, colour_plot_matrix, create_samples_gif, save_training_plots, save_final_values
+from training_utils import train_vae, train_classifier, generate_digits, classify_digits, evaluate_classifier, label_stats_find
+from visualisation_utils import visualise_digits, colour_plot_matrix, create_samples_gif, save_training_plots, save_final_values, save_label_frequency
 from config import load_config, merge_config_with_cli
 
 
@@ -25,9 +25,9 @@ def load_datasets():
     data_dir = Path("../data/")
 
     # importing the datasets
-    train_loader, test_loader = load_MNIST(download=True, data_dir=data_dir)
+    train_dataset, test_dataset = load_MNIST(download=True, data_dir=data_dir)
 
-    return train_loader, test_loader
+    return train_dataset, test_dataset
 
 
 def initialise_models():
@@ -173,6 +173,13 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     classifier_loss_matrix = np.zeros((iterations, classifier_epochs))
     classifier_accuracy_matrix = np.zeros((iterations, classifier_epochs))
 
+    # initialise list of dictionaries storing count of labels across iterations
+    label_counts = []
+    # add a value for the initial MNIST dataset
+    labels_list = [y for (x, y) in current_dataset]
+    initial_count_dict = label_stats_find(torch.Tensor(labels_list))
+    label_counts.append(initial_count_dict)
+
     # store some initial samples
     # Use multiprocessing only on GPU (CPU has pickling issues with lambda transforms on macOS)
     num_workers = set_num_workers(device)
@@ -213,6 +220,10 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
         generated_digits = generate_digits(vae, num_generated_samples, vae_latent_dim, device)
         generated_labels = classify_digits(classifier, generated_digits, device) # generating using the previous classifier
 
+        # find the label counts and add to the label_counts list
+        label_counts_dict = label_stats_find(generated_labels)
+        label_counts.append(label_counts_dict)
+
         current_dataset = TensorDataset(generated_digits, generated_labels) # next iteration dataset
 
         # Evaluate all previous classifiers on the new dataset, and writing to the loss and accuracy arrays
@@ -239,6 +250,9 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
 
     # save final loss and accuracy values
     save_final_values(run_dir, vae_loss_matrix, classifier_loss_matrix, classifier_accuracy_matrix)
+
+    # save the distribution of digits of different classifications
+    save_label_frequency(run_dir, label_counts, title="Distribution Of Label Counts Over Iterations")
 
     # make a gif from the saved sample images
     create_samples_gif(run_dir, filename='model_collapse.gif')
