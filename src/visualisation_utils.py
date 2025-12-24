@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import os
+import re
 
 
 def visualise_digits(digits, labels, iteration):
@@ -57,13 +58,86 @@ def colour_plot_matrix(matrix, title, cmap='viridis', num_ticks=11):
     
     return fig  # Return the figure object instead of showing
 
+def plot_training_curves(matrix, title, xlabel='Epoch', ylabel='Value', max_curves=10, cmap='viridis'):
+    """Plot training curves showing progression over epochs for each iteration"""
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    num_iterations = matrix.shape[0]
+
+    # If too many iterations, sample them evenly
+    if num_iterations > max_curves:
+        indices = np.linspace(0, num_iterations - 1, max_curves, dtype=int)
+    else:
+        indices = range(num_iterations)
+
+    # Create colormap
+    colormap = plt.get_cmap(cmap)
+    colors = [colormap(i / (len(indices) - 1)) for i in range(len(indices))]
+
+    # Plot each iteration's training curve with gradient colors
+    for i, idx in enumerate(indices):
+        ax.plot(matrix[idx, :], alpha=0.8, color=colors[i], label=f'Iteration {idx + 1}', linewidth=1.5)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    return fig
+
+
+def save_training_plots(run_dir, vae_loss_matrix, classifier_loss_matrix, classifier_accuracy_matrix):
+    """Save all training curve plots to a subdirectory in run_dir"""
+    # Create training_curves subdirectory
+    plots_dir = run_dir / "plots" / "training_curves"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+
+    # Plot and save VAE training loss
+    fig = plot_training_curves(
+        vae_loss_matrix,
+        title='VAE Training Loss Over Epochs',
+        xlabel='Epoch',
+        ylabel='Loss'
+    )
+    fig.savefig(plots_dir / 'vae_training_loss.png', bbox_inches='tight', dpi=300)
+    plt.close(fig)
+
+    # Plot and save classifier training loss
+    fig = plot_training_curves(
+        classifier_loss_matrix,
+        title='Classifier Training Loss Over Epochs',
+        xlabel='Epoch',
+        ylabel='Loss'
+    )
+    fig.savefig(plots_dir / 'classifier_training_loss.png', bbox_inches='tight', dpi=300)
+    plt.close(fig)
+
+    # Plot and save classifier training accuracy
+    fig = plot_training_curves(
+        classifier_accuracy_matrix,
+        title='Classifier Training Accuracy Over Epochs',
+        xlabel='Epoch',
+        ylabel='Accuracy'
+    )
+    fig.savefig(plots_dir / 'classifier_training_accuracy.png', bbox_inches='tight', dpi=300)
+    plt.close(fig)
+
+
 def create_samples_gif(run_dir, filename='model_collapse.gif', duration=200, loop=True):
     """create a gif of sampled images"""
     samples_dir = run_dir / "samples" # hardcoded samples directory
     gif_filename = run_dir / filename
     image_files = [] # image file paths
 
-    for filename in sorted(os.listdir(samples_dir)):
+    # Sort by numeric iteration number, not alphabetically
+    def get_iteration_number(fname):
+        """Extract iteration number from filename like 'iteration_{val}.png'"""
+        match = re.search(r'iteration_(\d+)', fname)
+        return int(match.group(1)) if match else 0
+
+    for filename in sorted(os.listdir(samples_dir), key=get_iteration_number):
         image_files.append(os.path.join(samples_dir, filename))
 
     if not image_files:
@@ -72,6 +146,11 @@ def create_samples_gif(run_dir, filename='model_collapse.gif', duration=200, loo
 
     # load images
     images = [Image.open(img) for img in image_files]
+
+    if loop:
+        loop = 0 # for infinite loop
+    else:
+        loop = 1 # for no looping
 
     images[0].save(
         gif_filename,

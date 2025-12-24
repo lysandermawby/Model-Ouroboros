@@ -10,11 +10,14 @@ wheels/
 .venv
 
 # ignore all downloaded data
-data/
+data/*
 !*/.gitkeep
 
 # ruff
 .ruff_cache/
 
 # outputs of experiments
-experiments/
+experiments/*
+
+# Development
+TODO.md

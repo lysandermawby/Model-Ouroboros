@@ -6,11 +6,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def train_vae(vae, optimizer, dataloader):
+def train_vae(vae, optimizer, dataloader, device):
     """training a vae on a single iteration of data"""
     vae.train()
     train_loss = 0
     for batch_idx, (data, _) in enumerate(dataloader):
+        data = data.to(device)  # Move data to GPU
         optimizer.zero_grad()
         recon_batch, mu, logvar = vae(data) # reconstructed batch straight from vae.forward
         loss = vae_loss_function(recon_batch, data, mu, logvar)
@@ -28,13 +29,14 @@ def vae_loss_function(recon_x, x, mu, logvar):
     return MSE + KLD # can change weighting for more control. This seems to work fine for now
 
 
-def train_classifier(classifier, optimizer, dataloader):
+def train_classifier(classifier, optimizer, dataloader, device):
     """training a classifer on a single iteration of data"""
     classifier.train()
     criterion = nn.CrossEntropyLoss()
     train_loss = 0
     correct = 0 # for later accuracy calculation. Entirely for evaluation
     for data, target in dataloader: # classification problem
+        data, target = data.to(device), target.to(device)  # Move data to GPU
         optimizer.zero_grad()
         output = classifier(data.view(data.size(0), -1))
         loss = criterion(output, target)
@@ -42,7 +44,7 @@ def train_classifier(classifier, optimizer, dataloader):
         optimizer.step()
         train_loss += loss.item()
 
-        # for accuracy evaluation only, not training 
+        # for accuracy evaluation only, not training
         pred = output.argmax(dim=1, keepdim=True)
         correct += pred.eq(target.view_as(pred)).sum().item()
 
@@ -50,13 +52,13 @@ def train_classifier(classifier, optimizer, dataloader):
     return train_loss / len(dataloader.dataset), correct / len(dataloader.dataset)
 
 
-def generate_digits(vae, num_samples, vae_latent_dim):
+def generate_digits(vae, num_samples, vae_latent_dim, device):
     """generate new digits"""
     vae.eval()
     with torch.no_grad():
-        z = torch.randn(num_samples, vae_latent_dim)
+        z = torch.randn(num_samples, vae_latent_dim).to(device)  # Generate on GPU
         samples = vae.decoder(z)
-    return samples
+    return samples.cpu()  # Move back to CPU for dataset creation
 
 
 def classify_digits(classifier, digits):
@@ -68,15 +70,16 @@ def classify_digits(classifier, digits):
     return labels
 
 
-def evaluate_classifier(classifier, dataloader):
+def evaluate_classifier(classifier, dataloader, device):
     """evaluating the performance of a given classifier on a dataloader"""
     classifier.eval()
     criterion = nn.CrossEntropyLoss()
-    total_loss = 0 
-    correct = 0 
+    total_loss = 0
+    correct = 0
     total = 0
     with torch.no_grad():
         for data, target in dataloader:
+            data, target = data.to(device), target.to(device)  # Move data to GPU
             output = classifier(data.view(data.size(0), -1))
             loss = criterion(output, target)
             total_loss += loss.item() * data.size(0)

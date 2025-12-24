@@ -71,6 +71,9 @@ class Classifier(nn.Module):
             model_layers.append(nn.Linear(layer_sizes[i], layer_sizes[i+1]))
             model_layers.append(nn.ReLU())
 
+        # Add final output layer
+        model_layers.append(nn.Linear(layer_sizes[-1], num_classes))
+
         self.model = nn.Sequential(*model_layers)
     
     def forward(self, x):
