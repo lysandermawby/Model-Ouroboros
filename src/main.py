@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
+import yaml
 
 # local imports
 from load_dataset import load_MNIST
@@ -140,7 +141,7 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     classifier_lr = cfg['classifier']['learning_rate']
     classifier_epochs = cfg['classifier']['epochs']
     num_generated_samples = cfg['experiment']['num_generated_samples']
-    num_displayed_samples = cfg['experiment']['num_displayed_samples']
+    num_displayed_samples = cfg['experiment']['num_displayed_samples']    
 
     # Set device (GPU if available, otherwise CPU)
     device = detect_device()
@@ -154,6 +155,12 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     experiments_dir = Path('../experiments/')
     run_dir = experiments_dir / f"run_{timestamp}"
+    run_dir.mkdir(exist_ok=True)
+
+    # saving the config yaml file to the run_dir for reproducability
+    config_file_path = run_dir / "config.yaml"
+    with open(config_file_path, "w") as f:
+        yaml.safe_dump(cfg, f, default_flow_style=False, allow_unicode=True)
 
     # loading MNIST datasets
     train_dataset, test_dataset = load_datasets()
