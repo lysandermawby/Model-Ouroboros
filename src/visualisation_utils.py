@@ -161,3 +161,46 @@ def create_samples_gif(run_dir, filename='model_collapse.gif', duration=200, loo
         optimize=False
     )
 
+
+def plot_final_values(matrix, title, xlabel='Iteration', ylabel='Value'):
+    """plotting the final loss and accuracy from different runs"""
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    final_values = matrix[:, -1] # last column for a 2D array
+    xvalues = np.arange(len(final_values))
+
+    ax.plot(xvalues, final_values)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    return fig
+
+def save_final_values(run_dir, vae_loss_matrix, classifier_loss_matrix, classifier_accuracy_matrix):
+    """saving all the final values plots in run_dir"""
+    # creating final_values directory
+    final_values_dir = run_dir / "plots" / "final_values"
+    final_values_dir.mkdir(parents=True, exist_ok=True)
+
+    # plot and save the VAE final loss values
+    fig = plot_final_values(
+        vae_loss_matrix, title='VAE Final Training Loss Over Iterations',
+        xlabel='Iteration',
+        ylabel='Loss'
+    )
+
+    fig.savefig(final_values_dir / "vae_final_loss.png", bbox_inches='tight', dpi=300)
+    plt.close(fig)
+
+    # plot and save the clasifier final training loss
+    fig = plot_final_values(classifier_loss_matrix, title='Classifier Final Training Loss Over Iterations', xlabel='Iteration', ylabel='Loss')
+
+    fig.savefig(final_values_dir / "classifier_final_loss.png", bbox_inches='tight', dpi=300)
+    plt.close(fig)
+
+    # plot and save the classifier final accuracies
+    fig = plot_final_values(classifier_accuracy_matrix, title='Classifier Final Accuracy Over Iterations', xlabel='Iteration', ylabel='Accuracy')
+
+    fig.savefig(final_values_dir / "classifier_final_accuracy.png", bbox_inches='tight', dpi=300)
+    plt.close(fig)

@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from load_dataset import load_MNIST
 from models import VAE, Classifier
 from training_utils import train_vae, train_classifier, generate_digits, classify_digits, evaluate_classifier
-from visualisation_utils import visualise_digits, colour_plot_matrix, create_samples_gif, save_training_plots
+from visualisation_utils import visualise_digits, colour_plot_matrix, create_samples_gif, save_training_plots, save_final_values
 from config import load_config, merge_config_with_cli
 
 
@@ -89,10 +89,17 @@ def save_analysis_matrices(run_dir, matrix, title, file_name, cmap='viridis', nu
     # free memory
     plt.close(fig)
 
+
 def detect_device():
     """finding available CUDA GPUs if available"""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     return device
+
+
+def set_num_workers(device):
+    """setting the number of workers to be used"""
+    num_workers = 4 if device.type == 'cuda' else 0
+    return num_workers
 
     
 @click.command(context_settings=dict(help_option_names=['-h', '--help'], show_default=True))
@@ -167,16 +174,19 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     classifier_accuracy_matrix = np.zeros((iterations, classifier_epochs))
 
     # store some initial samples
+    # Use multiprocessing only on GPU (CPU has pickling issues with lambda transforms on macOS)
+    num_workers = set_num_workers(device)
     initial_dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=True,
-                                   num_workers=4, pin_memory=True if device.type == 'cuda' else False)
+                                   num_workers=num_workers, pin_memory=True if device.type == 'cuda' else False)
     save_data_samples(run_dir, 0, initial_dataloader, num_displayed_samples)
 
     # main training loop
     pbar = tqdm(range(1, iterations + 1), desc='Dataset Iterations', leave=True, dynamic_ncols=True)
     for iteration in pbar:
-        # Create DataLoader with multi-process data loading
+        # Create DataLoader with multi-process data loading (only on GPU)
+        num_workers = set_num_workers(device)
         dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=True,
-                               num_workers=4, pin_memory=True if device.type == 'cuda' else False)
+                               num_workers=num_workers, pin_memory=True if device.type == 'cuda' else False)
 
         vae_optimizer = optim.Adam(vae.parameters(), lr=vae_lr)
         vae_pbar = tqdm(range(vae_epochs), desc='  Training VAE', leave=False, dynamic_ncols=True)
@@ -206,8 +216,9 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
         current_dataset = TensorDataset(generated_digits, generated_labels) # next iteration dataset
 
         # Evaluate all previous classifiers on the new dataset, and writing to the loss and accuracy arrays
+        num_workers = set_num_workers(device)
         new_dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=False,
-                                   num_workers=4, pin_memory=True if device.type == 'cuda' else False)
+                                   num_workers=num_workers, pin_memory=True if device.type == 'cuda' else False)
         for prev_iteration, prev_classifier in enumerate(classifiers):
             loss, accuracy = evaluate_classifier(prev_classifier, new_dataloader, device)
             loss_matrix[prev_iteration, iteration - 1] = loss
@@ -225,6 +236,9 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
 
     # save training curves
     save_training_plots(run_dir, vae_loss_matrix, classifier_loss_matrix, classifier_accuracy_matrix)
+
+    # save final loss and accuracy values
+    save_final_values(run_dir, vae_loss_matrix, classifier_loss_matrix, classifier_accuracy_matrix)
 
     # make a gif from the saved sample images
     create_samples_gif(run_dir, filename='model_collapse.gif')

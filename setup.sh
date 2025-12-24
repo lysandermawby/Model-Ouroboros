@@ -39,4 +39,4 @@ else
 fi
 
 echo "\n${GREEN}Setup complete!${NC}"
-echo "To verify CUDA support, run: python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
+echo "To verify whether CUDA support is available, run: python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"

@@ -39,3 +39,11 @@ The VAE then has 60,000 samples drawn (the same number as are in the training da
 The same VAE is continually trained on its own outputs, and sampled from each iteration. As can be clearly seen, the model not only gradually ceases to produce images which look like original MNIST samples, but the outputs look more and more similar over time. Eventually, the outputs almost always start to look like blurred 8s, and stop evolving.
 
 Model collapse can be seen by looking at the samples degrade and converge over time. It can be somewhat quantified by taking the classifiers trained on each dataset iteration, and evaluating them on one anothers datasets. The later classifiers show no ability to classify the real MNIST dataset while the earlier classifiers retain some ability, implying that the dataset simplifies rather than entirely losing any resemblance to the original data.
+
+## GPU Acceleration
+
+Model-Ouroboros will work as expected on either CPU or CUDA-enabled GPU.
+
+As currently written, this will not utilise any GPU without CUDA support. If `nvidia-smi` is detected, then PyTorch is downloaded using a wheel specifically with CUDA 12.1 support (see `setup.sh` for more details).
+
+Empirically, performance improvements using the CUDA version as opposed to only a CPU provide moderate improvements of around 2x.
