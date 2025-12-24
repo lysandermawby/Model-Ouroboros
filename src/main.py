@@ -140,6 +140,8 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     print(f"Using device: {device}")
     if device.type == 'cuda':
         print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA Version: {torch.version.cuda}")
+        print(f"Available GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
 
     # directory to save script outputs
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -165,14 +167,16 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     classifier_accuracy_matrix = np.zeros((iterations, classifier_epochs))
 
     # store some initial samples
-    initial_dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=True)
+    initial_dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=True,
+                                   num_workers=4, pin_memory=True if device.type == 'cuda' else False)
     save_data_samples(run_dir, 0, initial_dataloader, num_displayed_samples)
 
     # main training loop
     pbar = tqdm(range(1, iterations + 1), desc='Dataset Iterations', leave=True, dynamic_ncols=True)
     for iteration in pbar:
-        # Create DataLoader
-        dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=True)
+        # Create DataLoader with multi-process data loading
+        dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=True,
+                               num_workers=4, pin_memory=True if device.type == 'cuda' else False)
 
         vae_optimizer = optim.Adam(vae.parameters(), lr=vae_lr)
         vae_pbar = tqdm(range(vae_epochs), desc='  Training VAE', leave=False, dynamic_ncols=True)
@@ -197,12 +201,13 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
 
         # Generate new dataset
         generated_digits = generate_digits(vae, num_generated_samples, vae_latent_dim, device)
-        generated_labels = classify_digits(classifier, generated_digits) # from prev classifier notably
+        generated_labels = classify_digits(classifier, generated_digits, device) # generating using the previous classifier
 
         current_dataset = TensorDataset(generated_digits, generated_labels) # next iteration dataset
 
         # Evaluate all previous classifiers on the new dataset, and writing to the loss and accuracy arrays
-        new_dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=False)
+        new_dataloader = DataLoader(current_dataset, batch_size=batch_size, shuffle=False,
+                                   num_workers=4, pin_memory=True if device.type == 'cuda' else False)
         for prev_iteration, prev_classifier in enumerate(classifiers):
             loss, accuracy = evaluate_classifier(prev_classifier, new_dataloader, device)
             loss_matrix[prev_iteration, iteration - 1] = loss
@@ -212,7 +217,7 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
         save_data_samples(run_dir, iteration, new_dataloader, num_displayed_samples)
 
         # This line can be used to save the current dataset for later analysis
-        #torch.save(current_dataset, f'generated_dataset_iteration_{iteration + 1}.pt')
+        #torch.save(current_dataset, f'{run_dir}/generated_dataset_iteration_{iteration + 1}.pt')
 
     # generating visualisations of previous losses and accuracy
     save_analysis_matrices(run_dir, loss_matrix, 'Loss Matrix', 'loss_matrix.png')

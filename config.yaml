@@ -5,7 +5,7 @@
 # Experiment settings
 experiment:
   iterations: 20                    # Number of dataset generation iterations 
-  batch_size: 128                   # Batch size for training 
+  batch_size: 512                   # Batch size for training 
   num_generated_samples: 60000      # Samples generated per iteration (MNIST train set size)
   num_displayed_samples: 10         # Number of samples to visualize (must be a multiple of 10)
 

@@ -61,13 +61,15 @@ def generate_digits(vae, num_samples, vae_latent_dim, device):
     return samples.cpu()  # Move back to CPU for dataset creation
 
 
-def classify_digits(classifier, digits):
+def classify_digits(classifier, digits, device):
     """classifying digits"""
     classifier.eval()
+    digits = digits.to(device)
+
     with torch.no_grad():
         output = classifier(digits)
         labels = output.argmax(dim=1)
-    return labels
+    return labels.cpu()  # Return labels on CPU for dataset creation
 
 
 def evaluate_classifier(classifier, dataloader, device):
