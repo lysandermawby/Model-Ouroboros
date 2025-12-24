@@ -186,6 +186,8 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     labels_list = [y for (x, y) in current_dataset]
     initial_count_dict = label_stats_find(torch.Tensor(labels_list))
     label_counts.append(initial_count_dict)
+    # list of dictionaries for storing count of labels from the initially trained classifier when applied to later iterations' datasets
+    initial_label_counts = []
 
     # store some initial samples
     # Use multiprocessing only on GPU (CPU has pickling issues with lambda transforms on macOS)
@@ -223,6 +225,15 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
         # Store the trained classifier in classifiers list. Used later for overall evaluation
         classifiers.append(classifier)
 
+        # saving the first trained classifer, trained on the real MNIST dataset
+        if iteration == 1:
+            initial_classifier = classifier
+            digits_list = [x for (x, y) in current_dataset]
+            digits_tensor = torch.stack(digits_list, dim=0)
+            initially_classified_labels = classify_digits(initial_classifier, digits_tensor, device)
+            label_counts_dict = label_stats_find(initially_classified_labels)
+            initial_label_counts.append(label_counts_dict)
+
         # Generate new dataset
         generated_digits = generate_digits(vae, num_generated_samples, vae_latent_dim, device)
         generated_labels = classify_digits(classifier, generated_digits, device) # generating using the previous classifier
@@ -245,6 +256,11 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
         # save image samples
         save_data_samples(run_dir, iteration, new_dataloader, num_displayed_samples)
 
+        # applying the initial classifier on the newly generated dataset
+        initially_classified_labels = classify_digits(initial_classifier, generated_digits, device)
+        label_counts_dict = label_stats_find(initially_classified_labels)
+        initial_label_counts.append(label_counts_dict)
+
         # This line can be used to save the current dataset for later analysis
         #torch.save(current_dataset, f'{run_dir}/generated_dataset_iteration_{iteration + 1}.pt')
 
@@ -259,7 +275,10 @@ def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, clas
     save_final_values(run_dir, vae_loss_matrix, classifier_loss_matrix, classifier_accuracy_matrix)
 
     # save the distribution of digits of different classifications
-    save_label_frequency(run_dir, label_counts, title="Distribution Of Label Counts Over Iterations")
+    save_label_frequency(run_dir, label_counts, filename="label_counts.png", title="Distribution Of Label Counts Over Iterations")
+
+    # save the distribution of digits from classifications using the initial classifier
+    save_label_frequency(run_dir, initial_label_counts, filename="initial_label_counts.png", title="Distribution Of Label Counts Over Iterations (using the initial classifier)")
 
     # make a gif from the saved sample images
     create_samples_gif(run_dir, filename='model_collapse.gif')

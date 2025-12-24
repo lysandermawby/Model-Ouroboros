@@ -206,7 +206,7 @@ def save_final_values(run_dir, vae_loss_matrix, classifier_loss_matrix, classifi
     plt.close(fig)
 
 
-def save_label_frequency(run_dir, label_counts, title, cmap='viridis'):
+def save_label_frequency(run_dir, label_counts, title, filename, cmap='viridis'):
     """save the frequency of different labels in the generated datasets"""
     label_freq_dir = run_dir / "plots" / "label_frequencies"
     label_freq_dir.mkdir(exist_ok=True)
@@ -235,6 +235,6 @@ def save_label_frequency(run_dir, label_counts, title, cmap='viridis'):
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
 
-    fig.savefig(label_freq_dir / "label_counts.png", bbox_inches='tight', dpi=300)
+    fig.savefig(label_freq_dir / filename, bbox_inches='tight', dpi=300)
     plt.close(fig)
 
