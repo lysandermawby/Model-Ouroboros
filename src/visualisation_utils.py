@@ -172,6 +172,7 @@ def plot_final_values(matrix, title, xlabel='Iteration', ylabel='Value'):
     ax.plot(xvalues, final_values)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    ax.set_title(title)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
 
@@ -230,7 +231,7 @@ def save_label_frequency(run_dir, label_counts, title, filename, cmap='viridis')
     
     ax.set_xlabel("Iterations")
     ax.set_ylabel("Label Counts")
-    ax.set_title("Distribution Of Label Counts Over Iterations")
+    ax.set_title(title)
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.grid(True, alpha=0.3)
     plt.tight_layout()

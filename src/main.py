@@ -31,13 +31,6 @@ def load_datasets():
     return train_dataset, test_dataset
 
 
-def initialise_models():
-    """initialising the VAE and classification models"""
-    vae, vae_latent_dim = initialise_vae()
-    classifier = initialise_classifier()
-
-    return vae, classifier
-
 def initialise_vae(config):
     """initialising the vae"""
     vae_layer_sizes = config['vae']['layer_sizes']
@@ -111,7 +104,7 @@ def set_num_workers(device):
 @click.option('--vae-epochs', help='VAE training epochs', default=None, type=int)
 @click.option('--classifier-lr', help='Classifier learning rate', default=None, type=float)
 @click.option('--classifier-epochs', help='Classifer training epochs', default=None, type=int)
-@click.option('--num-generated_samples', help='Number of samples to be generated per iteration', default=None, type=int)
+@click.option('--num-generated-samples', help='Number of samples to be generated per iteration', default=None, type=int)
 @click.option('--num-displayed-samples', help='Number of samples from an iteration to be displayed', default=None, type=int)
 @click.option('--output-dir', help='directory to save outputs in (inside analysis/)', default=None, type=str)
 def main(config, iterations, batch_size, vae_lr, vae_epochs, classifier_lr, classifier_epochs, num_generated_samples, num_displayed_samples, output_dir):
