@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Pre-commit hook to keep requirements.txt in sync with pyproject.toml
+# Runs: uv pip compile pyproject.toml -o requirements.txt
+
+echo "Running uv pip compile to update requirements.txt ..."
+
+# run the compilation
+uv pip compile pyproject.toml -o requirements.txt
+
+# check if requirements.txt was modified
+if git diff --quiet requirements.txt; then
+    echo "requirements.txt is up to date"
+else
+    echo "requirements.txt was updated - adding to commit"
+    git add requirements.txt
+fi
+
+
