@@ -4,16 +4,17 @@
 
 # Experiment settings
 experiment:
-  iterations: 30                    # Number of dataset generation iterations 
-  batch_size: 512                   # Batch size for training 
+  iterations: 30                    # Number of dataset generation iterations
+  batch_size: 512                   # Batch size for training
   num_generated_samples: 60000      # Samples generated per iteration (MNIST train set size)
   num_displayed_samples: 10         # Number of samples to visualize (must be a multiple of 10)
+  random_seed: null                   # Random seed for reproducibility (null to disable)
 
 # VAE architecture and training
 vae:
   layer_sizes: [784, 512, 256, 128, 64]      # Encoder/decoder hidden layers (first must be 784 for MNIST)
-  latent_dim: 32                    # Latent space dimensionality
-  learning_rate: 0.0002              # VAE learning rate
+  latent_dim: 50                    # Latent space dimensionality
+  learning_rate: 0.0001              # VAE learning rate
   epochs: 100                        # Training epochs per iteration
 
 # Classifier architecture and training

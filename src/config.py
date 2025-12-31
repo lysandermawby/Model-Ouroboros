@@ -3,10 +3,11 @@
 
 import yaml
 from pathlib import Path
+from utils import validate_config
 
 
 def load_config(config_path):
-    """load configuration from YAML file"""
+    """oad and validate configuration from YAML file"""
     config_path = Path(config_path)
 
     if not config_path or not config_path.exists():
@@ -15,11 +16,17 @@ def load_config(config_path):
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
+    # Validate the loaded configuration
+    validate_config(config)
+
     return config
 
 
 def merge_config_with_cli(config, cli_args):
-    """overwriting config values with those specified in CLI"""
+    """
+    merge CLI arguments with config, with CLI taking precedence
+    validates the merged configuration before returning
+    """
     # Map CLI argument names to config paths
     cli_to_config_mapping = {
         'iterations': ('experiment', 'iterations'),
@@ -30,6 +37,7 @@ def merge_config_with_cli(config, cli_args):
         'classifier_epochs': ('classifier', 'epochs'),
         'num_generated_samples': ('experiment', 'num_generated_samples'),
         'num_displayed_samples': ('experiment', 'num_displayed_samples'),
+        'random_seed': ('experiment', 'random_seed'),
     }
 
     # Override config values with CLI arguments
@@ -40,6 +48,9 @@ def merge_config_with_cli(config, cli_args):
             for key in config_path[:-1]:
                 current = current[key]
             current[config_path[-1]] = cli_args[cli_key]
+
+    # Validate the merged configuration
+    validate_config(config)
 
     return config
 

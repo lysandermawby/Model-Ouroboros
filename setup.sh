@@ -33,10 +33,15 @@ echo "\n${GREEN}Installing PyTorch...${NC}"
 if command -v nvidia-smi > /dev/null 2>&1; then
     echo "CUDA detected - installing PyTorch with CUDA 12.1 support"
     uv pip install torch --index-url https://download.pytorch.org/whl/cu121
+elif [[ $(uname -m) == 'arm64' ]] && [[ $(uname -s) == 'Darwin' ]]; then
+    echo "Apple Silicon detected - installing PyTorch (with MPS support)"
+    uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 else
-    echo "No CUDA detected - installing CPU-only PyTorch"
+    echo "No GPU acceleration detected - installing CPU-only PyTorch"
     uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 fi
 
 echo "\n${GREEN}Setup complete!${NC}"
-echo "To verify whether CUDA support is available, run: python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
+echo "To verify GPU support, run one of the following:"
+echo "  CUDA: python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
+echo "  MPS:  python -c 'import torch; print(f\"MPS available: {torch.backends.mps.is_available()}\")'"
