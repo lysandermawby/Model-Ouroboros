@@ -1,6 +1,6 @@
 # Model Ouroboros
 
-Demonstrating model collapse on the MNIST dataset.
+This project demonstrates model collapse using VAEs trained on MNIST data.
 
 Model Collapse refers to the degradation in model quality when trained on its own outputs. Given the importance of LLMs in frontier AI development and the now ubiquitous presence of LLM outputs in internet text archives, this phenomenon could slow or otherwise severely disrupt the creation of new foundation models over the next couple of years
 
@@ -54,7 +54,7 @@ Here, the label counts from the 'current classifier' refer to labels assigned by
 
 At iteration 17 (note that the exact iteration where this transition occurs depends on the `./config.yaml` used, and includes probabilistic variance), the dataset consists entirely of 8s.
 
-The presistent preference for 8s is likely due to the symmetry, and similarity of the shape to those of other digits.
+The persistent preference for 8s is likely due to the symmetry, and similarity of the shape to those of other digits.
 
 Convergent images should be very near the maximum likelihood region of the model's latent space. Empirically, it seems that a rough 8 figure is also the convergent image for models trained on the EMNIST dataset also.
 
@@ -86,7 +86,7 @@ uv run python main.py
 
 You can change many features of the training process using the associated CLI, or by setting a `./config.yaml` file.
 Command line arguments passed to `./main.py` overwrite the contents of the config file.
-To see a list of the command-line arguments available, run `./main` with the help command.
+To see a list of the command-line arguments available, run `./main.py` with the help command.
 
 ```bash
 uv run python main.py --help
@@ -98,10 +98,10 @@ Model-Ouroboros will work as expected on either CPU or CUDA-enabled GPU.
 
 As currently written, this will not utilise any GPU without CUDA support. If `nvidia-smi` is detected, then PyTorch is downloaded using a wheel specifically with CUDA 12.1 support (see `./setup.sh` for more details).
 
-Empirically, performance improvements using the CUDA version as opposed to only a CPU provide moderate improvements of around 2x.
+Empirically, performance improvements using the CUDA version as opposed to only a CPU provide moderate improvements of around 2x for reasonably-sized models.
 
 ## Clear Processed Data
 
 To clear previous runs, run the `./experiments/delete_runs.sh` script.
-WARNING: Doing this will delete every run in your experiments directory. Before doing this, ensure that you have collected all the relevant runs you would like to keep.
-This script is indended to be used to free up disk space after development. You do not want to do this after running your own custom experiments.
+**WARNING:** Doing this will delete every run in your experiments directory. Before doing this, ensure that you have collected all the relevant runs you would like to keep.
+This script is intended to be used to free up disk space after development. You do not want to do this after running your own custom experiments.
